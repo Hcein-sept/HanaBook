@@ -1,4 +1,4 @@
-package com.recallio.app
+package com.hanabook.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -53,7 +53,9 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\recallio_dev.ps1 run-window
 powershell.exe -ExecutionPolicy Bypass -File scripts\recallio_dev.ps1 build-android-debug
 ```
 
-可用任务：`clean` `pub-get` `analyze` `test` `build-windows-debug` `build-windows-release` `build-android-debug` `run-windows` `doctor`
+可用任务：`clean` `pub-get` `analyze` `test` `build-windows-debug` `build-windows-release` `build-android-debug` `build-android-release` `run-windows` `doctor`
+
+`build-android-release` 使用 `--split-per-abi`，发布时取 arm64-v8a 产物；`build-windows-release` 的产物在 `build\windows\x64\runner\Release\`。
 
 脚本会自动管理 `PUB_CACHE`、`TEMP`、`GRADLE_USER_HOME` 等环境变量，避免 Windows 下 sqlite3 native assets 和 MSBuild PATH 过长问题。
 

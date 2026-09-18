@@ -1,5 +1,5 @@
 param(
-  [ValidateSet('clean', 'pub-get', 'analyze', 'test', 'build-windows-debug', 'build-windows-release', 'build-android-debug', 'run-windows', 'doctor')]
+  [ValidateSet('clean', 'pub-get', 'analyze', 'test', 'build-windows-debug', 'build-windows-release', 'build-android-debug', 'build-android-release', 'run-windows', 'doctor')]
   [string] $Task = 'doctor'
 )
 
@@ -69,6 +69,9 @@ switch ($Task) {
   }
   'build-android-debug' {
     & $Flutter build apk --debug
+  }
+  'build-android-release' {
+    & $Flutter build apk --release --split-per-abi
   }
   'run-windows' {
     & $Flutter run -d windows

@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../metadata/metadata_provider.dart';
 import '../../models/metadata_search_result.dart';
 import '../../models/work_type.dart';
 import '../../repositories/metadata_repository.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/pressable.dart';
 import '../../shared/widgets/recallio_page_scaffold.dart';
 
 class SearchPage extends ConsumerStatefulWidget {
@@ -42,10 +44,15 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     return RecallioPageScaffold(
       title: '搜索导入',
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.pageHorizontal,
+          AppSpacing.sm,
+          AppSpacing.pageHorizontal,
+          AppSpacing.xl,
+        ),
         children: [
           _SectionTitle('查找作品'),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<WorkType>(
             initialValue: _type,
             decoration: const InputDecoration(labelText: '类型'),
@@ -241,20 +248,20 @@ class _SearchResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
           color: colorScheme.brightness == Brightness.light
               ? AppTheme.cardLight
               : AppTheme.cardDark,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: AppRadius.card,
           border: Border.all(
             color: colorScheme.outlineVariant.withValues(alpha: 0.15),
             width: 0.5,
           ),
         ),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -361,12 +368,12 @@ class _MessageCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: colorScheme.brightness == Brightness.light
             ? AppTheme.cardLight
             : AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: AppRadius.card,
         border: Border.all(
           color: colorScheme.outlineVariant.withValues(alpha: 0.15),
           width: 0.5,

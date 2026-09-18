@@ -12,9 +12,10 @@ coverage/
 .vscode/
 *.iml
 
-# Claude
+# Claude / local agent and skill resources
 .claude/skills/
 .claude/settings.local.json
+.agents/
 
 # Platform build outputs
 android/.gradle/

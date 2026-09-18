@@ -7,7 +7,9 @@ import 'package:recallio/db/app_database.dart';
 import 'package:recallio/features/record_edit/work_edit_page.dart';
 import 'package:recallio/features/search/search_page.dart';
 import 'package:recallio/features/work_detail/work_detail_page.dart';
+import 'package:recallio/models/rating_presentation_config.dart';
 import 'package:recallio/repositories/work_repository.dart';
+import 'package:recallio/services/settings_service.dart';
 import 'package:recallio/shared/widgets/work_card.dart';
 
 void main() {
@@ -50,18 +52,21 @@ void main() {
     ],
   );
 
-  testWidgets('Recallio app shows home page', (tester) async {
+  testWidgets('HanaBook app shows home page', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           workLibraryProvider.overrideWith((ref) => Stream.value(const [])),
+          ratingPresentationConfigProvider.overrideWith(
+            (ref) async => RatingPresentationConfig.empty,
+          ),
         ],
         child: const RecallioApp(),
       ),
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Recallio'), findsOneWidget);
+    expect(find.text('HanaBook'), findsOneWidget);
     expect(find.text('我的记录'), findsOneWidget);
     expect(find.text('新建记录'), findsOneWidget);
   });
@@ -160,12 +165,18 @@ void main() {
 
   testWidgets('work card only shows phase one summary fields', (tester) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: WorkCard(item: simplifiedItem, onTap: () {}),
+      ProviderScope(
+        overrides: [
+          workLibraryProvider.overrideWith((ref) => Stream.value(const [])),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: WorkCard(item: simplifiedItem, onTap: () {}),
+          ),
         ),
       ),
     );
+    await tester.pump();
 
     expect(find.text('蜂蜜与四叶草'), findsOneWidget);
     expect(find.text('动画'), findsOneWidget);

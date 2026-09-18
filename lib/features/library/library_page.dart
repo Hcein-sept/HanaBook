@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../models/work_type.dart';
 import '../../repositories/work_repository.dart';
 import '../../shared/widgets/cover_image.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_view.dart';
+import '../../shared/widgets/journal_card.dart';
 import '../../shared/widgets/loading_view.dart';
+import '../../shared/widgets/pressable.dart';
 import '../../shared/widgets/rating_display.dart';
 import '../../shared/widgets/recallio_page_scaffold.dart';
+import '../../shared/widgets/type_badge.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
@@ -40,7 +43,8 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
         IconButton(
           tooltip: _gridView ? '列表视图' : '网格视图',
           onPressed: () => setState(() => _gridView = !_gridView),
-          icon: Icon(_gridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
+          icon: Icon(
+              _gridView ? Icons.view_list_rounded : Icons.grid_view_rounded),
         ),
         IconButton(
           tooltip: '新建作品',
@@ -57,7 +61,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.pageHorizontal,
+                  AppSpacing.sm,
+                  AppSpacing.pageHorizontal,
+                  0,
+                ),
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
@@ -74,19 +83,19 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                     hintText: '搜索标题或评价...',
                     isDense: true,
                     contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
                     ),
                   ),
                   onChanged: (_) => setState(() {}),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSpacing.md),
               _FilterBar(
                 typeFilter: _typeFilter,
                 onTypeChanged: (value) => setState(() => _typeFilter = value),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Expanded(
                 child: items.isEmpty
                     ? EmptyState(
@@ -116,7 +125,12 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
 
   Widget _buildList(List<WorkRecordItem> items) {
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        AppSpacing.xs,
+        AppSpacing.pageHorizontal,
+        AppSpacing.xl,
+      ),
       itemCount: items.length,
       itemBuilder: (context, index) => _ListItem(
         item: items[index],
@@ -150,14 +164,23 @@ class _StaggeredGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 900 ? 4 : constraints.maxWidth >= 600 ? 3 : 2;
+        final columns = constraints.maxWidth >= 900
+            ? 4
+            : constraints.maxWidth >= 600
+                ? 3
+                : 2;
         final cols = List.generate(columns, (_) => <WorkRecordItem>[]);
         for (int i = 0; i < items.length; i++) {
           cols[i % columns].add(items[i]);
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.xl,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -213,18 +236,18 @@ class _StaggeredCardState extends State<_StaggeredCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
+      child: Pressable(
         onTap: widget.onTap,
         child: AspectRatio(
           aspectRatio: 2 / 3,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: AppRadius.card,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -253,10 +276,10 @@ class _StaggeredCardState extends State<_StaggeredCard> {
                 if (hasReview)
                   AnimatedOpacity(
                     opacity: _hovered ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 200),
+                    duration: AppMotion.normal,
                     child: Container(
                       color: Colors.black.withValues(alpha: 0.75),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       alignment: Alignment.center,
                       child: Text(
                         item.review!,
@@ -277,7 +300,7 @@ class _StaggeredCardState extends State<_StaggeredCard> {
                   bottom: 10,
                   child: AnimatedOpacity(
                     opacity: _hovered && hasReview ? 0.0 : 1.0,
-                    duration: const Duration(milliseconds: 150),
+                    duration: AppMotion.fast,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -291,15 +314,21 @@ class _StaggeredCardState extends State<_StaggeredCard> {
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
+                        const SizedBox(height: AppSpacing.xs),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 2,
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            _StaggeredBadge(text: item.type.label),
-                            const Spacer(),
-                            if (item.rating != null)
-                              RatingDisplay.compact(item.rating, showNumber: true, size: 12)
-                            else
-                              const Icon(Icons.star_border, size: 12, color: Colors.white54),
+                            TypeBadge.onImage(item.type.label),
+                            item.rating != null
+                                ? RatingDisplay.compact(
+                                    item.rating,
+                                    showNumber: true,
+                                    size: 12,
+                                  )
+                                : const RatingEmptyStar(size: 12),
                           ],
                         ),
                       ],
@@ -327,7 +356,8 @@ class _StaggeredCover extends StatelessWidget {
       return Container(
         color: colorScheme.surfaceContainerHighest,
         child: Center(
-          child: Icon(Icons.image_outlined, size: 32,
+          child: Icon(Icons.image_outlined,
+              size: 32,
               color: colorScheme.onSurfaceVariant.withValues(alpha: 0.25)),
         ),
       );
@@ -338,30 +368,6 @@ class _StaggeredCover extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       borderRadius: BorderRadius.zero,
-    );
-  }
-}
-
-class _StaggeredBadge extends StatelessWidget {
-  const _StaggeredBadge({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: Colors.white.withValues(alpha: 0.2),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
     );
   }
 }
@@ -377,23 +383,11 @@ class _ListItem extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: colorScheme.brightness == Brightness.light
-              ? AppTheme.cardLight
-              : AppTheme.cardDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border(
-            left: BorderSide(
-              color: AppTheme.primary.withValues(alpha: 0.35),
-              width: 3,
-            ),
-          ),
-        ),
-        padding: const EdgeInsets.all(12),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: JournalCard(
+        onTap: onTap,
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -407,27 +401,32 @@ class _ListItem extends StatelessWidget {
                     item.work.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    style: textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
                     children: [
-                      _ListItemBadge(text: item.type.label),
-                      if (item.rating != null) RatingDisplay.compact(item.rating),
+                      TypeBadge(item.type.label),
+                      if (item.rating != null)
+                        RatingDisplay.compact(item.rating),
                       if (item.recordDate != null)
-                        Text(item.recordDate!, style: textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        )),
+                        Text(item.recordDate!,
+                            style: textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            )),
                     ],
                   ),
                   if (item.review?.isNotEmpty == true) ...[
-                    const SizedBox(height: 8),
-                    Text(item.review!, maxLines: 2, overflow: TextOverflow.ellipsis,
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      )),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(item.review!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        )),
                   ],
                 ],
               ),
@@ -435,26 +434,6 @@ class _ListItem extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ListItemBadge extends StatelessWidget {
-  const _ListItemBadge({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25), width: 0.5),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(text, style: TextStyle(
-        fontSize: 11, fontWeight: FontWeight.w500,
-        color: AppTheme.primary.withValues(alpha: 0.8),
-      )),
     );
   }
 }
@@ -472,7 +451,9 @@ class _FilterBar extends StatelessWidget {
       height: 40,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.pageHorizontal,
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.only(right: 8),

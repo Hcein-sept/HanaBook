@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../db/app_database.dart';
 import '../../repositories/work_repository.dart';
 import '../../shared/widgets/cover_image.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_view.dart';
+import '../../shared/widgets/journal_card.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/rating_display.dart';
 import '../../shared/widgets/recallio_page_scaffold.dart';
+import '../../shared/widgets/type_badge.dart';
 
 class WorkDetailPage extends ConsumerWidget {
   const WorkDetailPage({required this.workId, super.key});
@@ -133,13 +136,13 @@ class _DetailContent extends StatelessWidget {
         // -- Header with cover + gradient backdrop --
         _DetailHeader(work: work),
         Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.pageHorizontal),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Type + rating
-              _TypeBadge(type: item.type.label),
-              const SizedBox(height: 18),
+              TypeBadge(item.type.label),
+              const SizedBox(height: AppSpacing.lg),
 
               // Rating hero
               if (item.rating != null)
@@ -148,39 +151,31 @@ class _DetailContent extends StatelessWidget {
                 Text('未评分', style: textTheme.bodyMedium?.copyWith(
                   color: colorScheme.onSurfaceVariant,
                 )),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
 
               // Review card
               _ReviewCard(item: item),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
 
               // Source info (if any)
               if (_hasSourceInfo(work))
-                GestureDetector(
+                JournalCard(
                   onTap: () => _showSourceSheet(context, work),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: colorScheme.brightness == Brightness.light
-                          ? AppTheme.cardLight
-                          : AppTheme.cardDark,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: colorScheme.outlineVariant.withValues(alpha: 0.1),
-                        width: 0.5,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 16,
-                            color: AppTheme.primary.withValues(alpha: 0.5)),
-                        const SizedBox(width: 8),
-                        Text('来源信息', style: textTheme.titleSmall),
-                        const Spacer(),
-                        Icon(Icons.chevron_right, size: 16,
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
-                      ],
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.cardPadding,
+                    vertical: 14,
+                  ),
+                  accentColor: AppTheme.primary.withValues(alpha: 0.2),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 16,
+                          color: AppTheme.primary.withValues(alpha: 0.5)),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text('来源信息', style: textTheme.titleSmall),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, size: 16,
+                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                    ],
                   ),
                 ),
             ],
@@ -237,7 +232,12 @@ class _DetailHeader extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        AppSpacing.pageHorizontal,
+        AppSpacing.pageHorizontal,
+        AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -288,23 +288,10 @@ class _ReviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Container(
+    return JournalCard(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colorScheme.brightness == Brightness.light
-            ? AppTheme.cardLight
-            : AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(
-            color: AppTheme.primary.withValues(alpha: 0.4),
-            width: 3,
-          ),
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -328,26 +315,6 @@ class _ReviewCard extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _TypeBadge extends StatelessWidget {
-  const _TypeBadge({required this.type});
-  final String type;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.3), width: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(type, style: TextStyle(
-        fontSize: 12, fontWeight: FontWeight.w500,
-        color: AppTheme.primary.withValues(alpha: 0.8),
-      )),
     );
   }
 }

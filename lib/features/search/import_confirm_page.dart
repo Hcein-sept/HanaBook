@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/theme/app_tokens.dart';
 import '../../metadata/metadata_provider.dart';
 import '../../models/metadata_search_result.dart';
 import '../../models/metadata_work_detail.dart';
@@ -60,7 +61,12 @@ class _ImportConfirmPageState extends ConsumerState<ImportConfirmPage> {
           final detail = snapshot.data!;
           final type = widget.initialResult.type;
           return ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.pageHorizontal,
+              AppSpacing.sm,
+              AppSpacing.pageHorizontal,
+              AppSpacing.xl,
+            ),
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +76,7 @@ class _ImportConfirmPageState extends ConsumerState<ImportConfirmPage> {
                     width: 120,
                     height: 168,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: AppSpacing.lg),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,12 +99,12 @@ class _ImportConfirmPageState extends ConsumerState<ImportConfirmPage> {
                 ],
               ),
               if (detail.summary?.trim().isNotEmpty ?? false) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
                 Text('简介摘要', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(detail.summary!.trim()),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               FilledButton.icon(
                 onPressed: _importing ? null : () => _import(detail, type),
                 icon: _importing
@@ -109,7 +115,7 @@ class _ImportConfirmPageState extends ConsumerState<ImportConfirmPage> {
                     : const Icon(Icons.playlist_add_check_outlined),
                 label: Text(_importing ? '正在导入' : '导入并记录'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               OutlinedButton.icon(
                 onPressed: _importing ? null : () => context.pop(),
                 icon: const Icon(Icons.close),

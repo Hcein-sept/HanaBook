@@ -3,14 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../repositories/work_repository.dart';
 import '../../shared/widgets/cover_image.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/error_view.dart';
+import '../../shared/widgets/journal_card.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/rating_display.dart';
 import '../../shared/widgets/recallio_page_scaffold.dart';
+import '../../shared/widgets/type_badge.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -20,7 +24,7 @@ class HomePage extends ConsumerWidget {
     final itemsAsync = ref.watch(workLibraryProvider);
 
     return RecallioPageScaffold(
-      title: 'Recallio',
+      title: AppConstants.displayName,
       titleWidget: const _BrandTitle(),
       child: itemsAsync.when(
         loading: () => const LoadingView(),
@@ -37,18 +41,23 @@ class HomePage extends ConsumerWidget {
               builder: (context, constraints) {
                 final wide = constraints.maxWidth >= 680;
                 return ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.pageHorizontal,
+                    AppSpacing.sm,
+                    AppSpacing.pageHorizontal,
+                    AppSpacing.xl,
+                  ),
                   children: [
                     if (wide)
                       _WideTopSection(items: items)
                     else ...[
                       _JournalHeader(itemCount: items.length),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: AppSpacing.xl),
                       _ActionButtons(),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.xl),
                       _MemoStats(items: items),
                     ],
-                    const SizedBox(height: 28),
+                    const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
                     // -- Recent timeline --
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -61,7 +70,7 @@ class HomePage extends ConsumerWidget {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     if (recent.isEmpty)
                       EmptyState(
                         title: '还没有记录',
@@ -100,7 +109,7 @@ class _BrandTitle extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(
-          'Recallio',
+          AppConstants.displayName,
           style: GoogleFonts.playfairDisplay(
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -121,12 +130,12 @@ class _WideTopSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _JournalHeader(itemCount: items.length),
-          const SizedBox(height: 28),
+          const SizedBox(height: AppSpacing.xl + AppSpacing.xs),
           // Action buttons — horizontal row
           Row(
             children: [
@@ -155,7 +164,7 @@ class _WideTopSection extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSpacing.xl),
           // Memo — full-width, 1 row of 4 stats
           _MemoStats(items: items),
         ],
@@ -266,17 +275,19 @@ class _MemoStats extends StatelessWidget {
     final ratedCount = items.where((item) => item.rating != null).length;
     final reviewedCount =
         items.where((item) => item.review?.isNotEmpty == true).length;
-    final highRatingCount =
-        items.where((item) => (item.rating ?? -1) >= 8).length;
+    final unratedCount = items.where((item) => item.rating == null).length;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
         color: colorScheme.brightness == Brightness.light
             ? const Color(0xFFFFF9F0)
             : const Color(0xFF28232A),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: AppRadius.card,
         border: Border(
           left: BorderSide(
             color: AppTheme.primary.withValues(alpha: 0.5),
@@ -292,7 +303,7 @@ class _MemoStats extends StatelessWidget {
           Expanded(child: _MemoCell(value: '${items.length}', label: '全部')),
           Expanded(child: _MemoCell(value: '$ratedCount', label: '已评分')),
           Expanded(child: _MemoCell(value: '$reviewedCount', label: '有评价')),
-          Expanded(child: _MemoCell(value: '$highRatingCount', label: '高分')),
+          Expanded(child: _MemoCell(value: '$unratedCount', label: '未评分')),
         ],
       ),
     );
@@ -446,72 +457,58 @@ class _TimelineEntry extends StatelessWidget {
           // Card
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
-              child: GestureDetector(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : AppSpacing.lg),
+              child: JournalCard(
                 onTap: () => context.push('/works/${item.work.id}'),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: colorScheme.brightness == Brightness.light
-                        ? AppTheme.cardLight
-                        : AppTheme.cardDark,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border(
-                      left: BorderSide(
-                        color: AppTheme.primary.withValues(alpha: 0.35),
-                        width: 3,
-                      ),
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Row(
+                  children: [
+                    CoverImage(
+                      path: item.work.coverPath,
+                      width: 56,
+                      height: 84,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      CoverImage(
-                        path: item.work.coverPath,
-                        width: 56,
-                        height: 84,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.work.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              TypeBadge(item.type.label),
+                              if (item.rating != null)
+                                RatingDisplay.compact(item.rating, showNumber: true),
+                            ],
+                          ),
+                          if (item.review?.isNotEmpty == true) ...[
+                            const SizedBox(height: AppSpacing.sm),
                             Text(
-                              item.work.title,
+                              item.review!,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
+                              style: textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                height: 1.4,
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: [
-                                _TimelineBadge(text: item.type.label),
-                                if (item.rating != null)
-                                  RatingDisplay.compact(item.rating, showNumber: true),
-                              ],
-                            ),
-                            if (item.review?.isNotEmpty == true) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                item.review!,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: textTheme.bodySmall?.copyWith(
-                                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                                  height: 1.4,
-                                ),
-                              ),
-                            ],
                           ],
-                        ),
+                        ],
                       ),
-                      Icon(Icons.chevron_right, size: 16, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
-                    ],
-                  ),
+                    ),
+                    Icon(Icons.chevron_right, size: 16, color: colorScheme.onSurfaceVariant.withValues(alpha: 0.3)),
+                  ],
                 ),
               ),
             ),
@@ -527,29 +524,5 @@ class _TimelineEntry extends StatelessWidget {
       return date.substring(5, 10).replaceAll('-', '/');
     }
     return date;
-  }
-}
-
-class _TimelineBadge extends StatelessWidget {
-  const _TimelineBadge({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: AppTheme.primary.withValues(alpha: 0.1),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w500,
-          color: AppTheme.primary.withValues(alpha: 0.8),
-        ),
-      ),
-    );
   }
 }

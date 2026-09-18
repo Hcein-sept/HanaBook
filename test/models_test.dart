@@ -25,19 +25,37 @@ void main() {
   });
 
   test('backup manifest can round trip through json', () {
-    final exportedAt = DateTime.parse('2026-06-19T20:00:00+08:00');
-    final manifest = BackupManifest.recallio(
-      exportedAt: exportedAt,
+    final createdAt = DateTime.parse('2026-06-19T20:00:00+08:00');
+    final manifest = BackupManifest.hanaBook(
+      createdAt: createdAt,
       platform: 'windows',
     );
 
-    final parsed = BackupManifest.fromJson(manifest.toJson());
+    final parsed = BackupManifest.fromCurrentJson(manifest.toJson());
 
-    expect(parsed.app, 'Recallio');
-    expect(parsed.schemaVersion, 1);
-    expect(parsed.exportedAt.toIso8601String(), exportedAt.toIso8601String());
+    expect(parsed.formatIdentifier, 'personal-media-library-backup');
+    expect(parsed.formatVersion, 2);
+    expect(parsed.appName, 'HanaBook');
+    expect(parsed.appVersion, '0.1.0+1');
+    expect(parsed.createdAt.toIso8601String(), createdAt.toIso8601String());
     expect(parsed.sourceClient, 'flutter-local');
     expect(parsed.platform, 'windows');
+    expect(parsed.isLegacy, isFalse);
+  });
+
+  test('legacy backup manifest is normalized without brand validation', () {
+    final parsed = BackupManifest.fromLegacyJson({
+      'app': 'Recallio',
+      'schemaVersion': 1,
+      'exportedAt': '2026-06-19T20:00:00+08:00',
+      'sourceClient': 'flutter-local',
+      'platform': 'windows',
+    });
+
+    expect(parsed.appName, 'Recallio');
+    expect(parsed.formatVersion, 1);
+    expect(parsed.createdAt.year, 2026);
+    expect(parsed.isLegacy, isTrue);
   });
 
   test('backup data uses entries top-level key', () {

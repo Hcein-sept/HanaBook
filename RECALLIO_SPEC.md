@@ -1,8 +1,8 @@
-# Recallio 项目开发规格说明
+# HanaBook 项目开发规格说明
 
 ## 1. 项目定位
 
-Recallio 是一个本地优先、无账号、无社交属性的个人作品记录工具。
+HanaBook 是一个本地优先、无账号、无社交属性的个人作品记录工具。
 
 它不是 Bangumi、AniList、Animeko 或豆瓣式的 ACGN 收藏 / 社区工具，也不是作品百科资料库。第一版应保持轻量、私人工具感和手账式记录体验。
 
@@ -299,7 +299,27 @@ deleted_at TEXT
 
 ### 6.6 备份与恢复
 
-第一版备份 `data.json` 可以简化为：
+当前备份格式使用中性 ZIP 结构：
+
+```txt
+manifest.json
+data/
+  entries.json
+assets/
+  covers/
+```
+
+manifest 必须包含：
+
+- `formatIdentifier`：稳定、中性且不含产品品牌的格式标识。
+- `formatVersion`：当前格式版本。
+- `appName`：导出应用的展示名称。
+- `appVersion`：导出应用版本。
+- `createdAt`：备份创建时间。
+
+`appName` 只用于展示，导入分流不得依赖 Recallio 或 HanaBook 品牌字符串。默认文件名为 `HanaBook-backup-YYYY-MM-DD.zip`，但导入不得依赖文件名。
+
+`data/entries.json` 当前简化为：
 
 ```json
 {
@@ -327,7 +347,9 @@ entry 字段使用 camelCase：
 }
 ```
 
-如果内部结构仍包含 `works / records / tags / recordTags`，可以保留读取兼容，但新备份格式优先使用 `entries`。
+HanaBook 必须继续读取 Recallio v1 的根目录 `data.json` 与 `covers/` 结构。新旧格式通过 `formatIdentifier`、版本字段和目录特征区分；旧 manifest 中的 `app` 仅作为历史元数据，不参与合法性判断。
+
+如果内部结构仍包含 `works / records / tags / recordTags`，可以保留读取兼容，但当前新备份格式优先使用 `entries`。
 
 ## 7. 路由
 
@@ -389,7 +411,7 @@ Recallio App Data/
 
 ## 10. 隐私与安全
 
-Recallio 必须遵守：
+HanaBook 必须遵守：
 
 - 不上传用户记录。
 - 不上传用户评分。
@@ -405,7 +427,7 @@ Recallio 必须遵守：
 设置页或关于页需要明确说明：
 
 ```txt
-Recallio 默认将数据保存在当前设备本地。除非你主动使用外部搜索功能，否则应用不会访问网络。请定期导出备份包，以便迁移设备或防止数据丢失。
+HanaBook 默认将数据保存在当前设备本地。除非你主动使用外部搜索功能，否则应用不会访问网络。请定期导出备份包，以便迁移设备或防止数据丢失。
 ```
 
 ## 11. 开发命令
@@ -433,7 +455,9 @@ powershell.exe -ExecutionPolicy Bypass -File E:\ppfm\Recallio\scripts\recallio_d
 
 - 枚举文案转换。
 - 备份 manifest 解析。
-- `data.json` 序列化 / 反序列化。
+- `data/entries.json` 序列化 / 反序列化。
+- Recallio v1 `data.json` 兼容导入。
+- ZIP 重命名后的导入。
 - 评分范围校验。
 - Repository 创建、编辑、软删除。
 - 首页可启动。
@@ -487,11 +511,12 @@ powershell.exe -ExecutionPolicy Bypass -File E:\ppfm\Recallio\scripts\recallio_d
 
 目标：
 
-- 实现导出 backup.zip。
-- 实现导入 backup.zip。
+- 实现导出 `HanaBook-backup-YYYY-MM-DD.zip`。
+- 实现不依赖文件名的 ZIP 导入。
 - 实现 manifest.json。
-- 实现 `entries` 格式 data.json。
-- 导出 covers。
+- 实现 `entries` 格式 `data/entries.json`。
+- 导出 `assets/covers/`。
+- 兼容 Recallio v1 的 `data.json` 与 `covers/`。
 - 导入前显示备份预览。
 - 实现安全的覆盖导入和基础合并导入。
 

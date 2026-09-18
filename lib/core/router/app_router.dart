@@ -11,25 +11,56 @@ import '../../features/search/search_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/work_detail/work_detail_page.dart';
 import '../../models/metadata_search_result.dart';
+import '../theme/app_tokens.dart';
+
+/// Tabs switch instantly; pushed pages fade in with a subtle 8px rise.
+Page<void> _tabPage(Widget child) {
+  return NoTransitionPage(child: child);
+}
+
+Page<void> _pushPage(Widget child, GoRouterState state) {
+  return CustomTransitionPage(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 250),
+    reverseTransitionDuration: AppMotion.normal,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: AppMotion.enter,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.02),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
+  );
+}
 
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const HomePage(),
+      pageBuilder: (context, state) => _tabPage(const HomePage()),
     ),
     GoRoute(
       path: '/library',
-      builder: (context, state) => const LibraryPage(),
+      pageBuilder: (context, state) => _tabPage(const LibraryPage()),
     ),
     GoRoute(
       path: '/search',
-      builder: (context, state) => const SearchPage(),
+      pageBuilder: (context, state) => _tabPage(const SearchPage()),
     ),
     GoRoute(
       path: '/search/confirm',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final result = state.extra;
         if (result is! MetadataSearchResult) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -39,40 +70,40 @@ final appRouter = GoRouter(
               ),
             );
           });
-          return const SearchPage();
+          return _pushPage(const SearchPage(), state);
         }
-        return ImportConfirmPage(initialResult: result);
+        return _pushPage(ImportConfirmPage(initialResult: result), state);
       },
     ),
     GoRoute(
       path: '/works/new',
-      builder: (context, state) => const WorkEditPage(),
+      pageBuilder: (context, state) => _pushPage(const WorkEditPage(), state),
     ),
     GoRoute(
       path: '/works/:id',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final workId = state.pathParameters['id'] ?? '';
-        return WorkDetailPage(workId: workId);
+        return _pushPage(WorkDetailPage(workId: workId), state);
       },
     ),
     GoRoute(
       path: '/works/:id/edit',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final workId = state.pathParameters['id'] ?? '';
-        return WorkEditPage(workId: workId);
+        return _pushPage(WorkEditPage(workId: workId), state);
       },
     ),
     GoRoute(
       path: '/backup',
-      builder: (context, state) => const BackupPage(),
+      pageBuilder: (context, state) => _tabPage(const BackupPage()),
     ),
     GoRoute(
       path: '/settings',
-      builder: (context, state) => const SettingsPage(),
+      pageBuilder: (context, state) => _tabPage(const SettingsPage()),
     ),
     GoRoute(
       path: '/about',
-      builder: (context, state) => const AboutPage(),
+      pageBuilder: (context, state) => _pushPage(const AboutPage(), state),
     ),
   ],
 );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/app_theme.dart';
 import 'rating_display.dart';
 
 class RatingInput extends StatefulWidget {
@@ -34,10 +33,31 @@ class _RatingInputState extends State<RatingInput> {
     widget.controller.text = clamped.toStringAsFixed(1);
   }
 
+  void _handleManualRatingChanged(String value) {
+    final trimmed = value.trim();
+    final parsed = double.tryParse(trimmed);
+    setState(() {
+      if (trimmed.isEmpty) {
+        _sliderValue = 0;
+      } else if (parsed != null &&
+          parsed.isFinite &&
+          parsed >= 0 &&
+          parsed <= 10) {
+        _sliderValue = parsed;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final rating = double.tryParse(widget.controller.text);
-    final hasRating = rating != null && rating > 0;
+    final parsedRating = double.tryParse(widget.controller.text.trim());
+    final rating = parsedRating != null &&
+            parsedRating.isFinite &&
+            parsedRating >= 0 &&
+            parsedRating <= 10
+        ? parsedRating
+        : null;
+    final hasRating = rating != null;
     final colorScheme = Theme.of(context).colorScheme;
 
     return Column(
@@ -62,26 +82,21 @@ class _RatingInputState extends State<RatingInput> {
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            if (hasRating)
-              RatingDisplay(rating: rating, size: 28)
-            else
-              Text(
-                '未评分',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-              ),
-          ],
-        ),
+        if (hasRating)
+          RatingDisplay(rating: rating, size: 28)
+        else
+          Text(
+            '未评分',
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+          ),
         const SizedBox(height: 8),
         Slider(
           value: _sliderValue,
           min: 0,
           max: 10,
           divisions: 100,
-          activeColor: AppTheme.ratingColor(rating),
           onChanged: _updateRating,
         ),
         Row(
@@ -94,8 +109,8 @@ class _RatingInputState extends State<RatingInput> {
         const SizedBox(height: 8),
         TextFormField(
           controller: widget.controller,
-          keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
+          onChanged: _handleManualRatingChanged,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: const InputDecoration(
             labelText: '或手动输入（0-10，支持一位小数）',
             isDense: true,

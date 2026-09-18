@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/app_tokens.dart';
 import '../../models/record_status.dart';
 import '../../models/work_type.dart';
 import '../../repositories/work_repository.dart';
@@ -13,6 +14,7 @@ import '../../shared/widgets/error_view.dart';
 import '../../shared/widgets/loading_view.dart';
 import '../../shared/widgets/rating_input.dart';
 import '../../shared/widgets/recallio_page_scaffold.dart';
+import '../../shared/widgets/section_card.dart';
 import 'cover_crop_page.dart';
 
 class WorkEditPage extends ConsumerStatefulWidget {
@@ -38,6 +40,7 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
   String? _originalSourcePath;
   bool _notFound = false;
   bool _saving = false;
+  bool _pickingCover = false;
 
   @override
   void initState() {
@@ -77,10 +80,15 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
           return Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.pageHorizontal,
+                AppSpacing.sm,
+                AppSpacing.pageHorizontal,
+                AppSpacing.xl,
+              ),
               children: [
                 // -- Work section --
-                _SectionCard(
+                SectionCard(
                   title: '作品',
                   children: [
                     TextFormField(
@@ -95,7 +103,7 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                             : null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     // Type selector with icon buttons
                     Text('类型', style: Theme.of(context).textTheme.titleSmall),
                     const SizedBox(height: 10),
@@ -111,27 +119,31 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     // Cover picker
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         GestureDetector(
-                          onTap: _pickCover,
+                          onTap: _pickingCover || _saving ? null : _pickCover,
                           child: Container(
+                            key: const ValueKey('work-cover-thumbnail'),
                             width: 108,
-                            height: 148,
+                            height: 162,
                             decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(10),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.3),
+                            ),
+                            foregroundDecoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(
                                 color: AppTheme.primary.withValues(alpha: 0.3),
                                 width: 1,
                                 strokeAlign: BorderSide.strokeAlignInside,
                               ),
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.3),
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: _pendingCoverSourcePath != null ||
@@ -140,6 +152,7 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                                     path: _pendingCoverSourcePath ?? _coverPath,
                                     width: 108,
                                     height: 162,
+                                    fit: BoxFit.contain,
                                   )
                                 : Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -184,15 +197,19 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                               ),
                               const SizedBox(height: 10),
                               OutlinedButton.icon(
-                                onPressed: _pickCover,
-                                icon: const Icon(Icons.image_outlined, size: 18),
+                                onPressed: _pickingCover || _saving
+                                    ? null
+                                    : _pickCover,
+                                icon:
+                                    const Icon(Icons.image_outlined, size: 18),
                                 label: const Text('选择本地封面'),
                               ),
                               if (_pendingCoverSourcePath != null ||
                                   _coverPath != null) ...[
                                 const SizedBox(height: 8),
                                 OutlinedButton.icon(
-                                  onPressed: _reCrop,
+                                  onPressed:
+                                      _pickingCover || _saving ? null : _reCrop,
                                   icon: const Icon(Icons.crop, size: 18),
                                   label: const Text('重新截取'),
                                 ),
@@ -204,14 +221,14 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
 
                 // -- Review section --
-                _SectionCard(
+                SectionCard(
                   title: '我的评价',
                   children: [
                     RatingInput(controller: _ratingController),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _reviewController,
                       minLines: 4,
@@ -222,7 +239,7 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                         alignLabelWithHint: true,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _recordDateController,
                       readOnly: true,
@@ -236,21 +253,24 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSpacing.xl),
 
                 // -- Save button --
-                FilledButton.icon(
-                  onPressed: _saving ? null : _save,
-                  icon: _saving
-                      ? const SizedBox.square(
-                          dimension: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(_saving ? '正在保存' : '保存'),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _saving || _pickingCover ? null : _save,
+                    icon: _saving
+                        ? const SizedBox.square(
+                            dimension: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(_saving ? '正在保存' : '保存'),
+                  ),
                 ),
               ],
             ),
@@ -283,51 +303,77 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
   }
 
   Future<void> _pickCover() async {
-    final result = await FilePicker.pickFiles(
-      type: FileType.image,
-      allowMultiple: false,
-    );
-    if (result == null) return;
-    final path = result.files.single.path;
-    if (path == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('未能读取所选封面路径')),
-        );
+    if (_pickingCover || _saving) return;
+    setState(() => _pickingCover = true);
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+      if (!mounted || result == null) return;
+      final path = result.files.singleOrNull?.path;
+      if (path == null || path.trim().isEmpty) {
+        _showCoverError('未能读取所选封面路径');
+        return;
       }
-      return;
-    }
-    if (!mounted) return;
 
-    _originalSourcePath = path;
-
-    final croppedPath = await Navigator.of(context).push<String>(
-      MaterialPageRoute(
-        builder: (_) => CoverCropPage(sourcePath: path),
-      ),
-    );
-
-    if (croppedPath != null && mounted) {
-      setState(() => _pendingCoverSourcePath = croppedPath);
+      await _openCoverCrop(path);
+    } catch (_) {
+      if (mounted) _showCoverError('选择封面失败，请重新选择图片');
+    } finally {
+      if (mounted) setState(() => _pickingCover = false);
     }
   }
 
   Future<void> _reCrop() async {
-    final source = _originalSourcePath ?? _pendingCoverSourcePath ?? _coverPath;
-    if (source == null) return;
+    if (_pickingCover || _saving) return;
+    setState(() => _pickingCover = true);
+    try {
+      final sources = {
+        if (_originalSourcePath != null) _originalSourcePath!,
+        if (_pendingCoverSourcePath != null) _pendingCoverSourcePath!,
+        if (_coverPath != null) _coverPath!,
+      };
+      for (final source in sources) {
+        final coverFile = await CoverService().resolveCoverFile(source);
+        if (!mounted) return;
+        if (coverFile == null) continue;
 
-    final coverFile = await CoverService().resolveCoverFile(source);
-    if (coverFile == null || !mounted) return;
+        if (_originalSourcePath != null && source != _originalSourcePath) {
+          _showCoverError('原图已不可用，将使用当前封面重新截取');
+        }
+        await _openCoverCrop(coverFile.path);
+        return;
+      }
+      if (mounted) _showCoverError('封面文件已不可用，请重新选择图片');
+    } catch (_) {
+      if (mounted) _showCoverError('读取封面失败，请重新选择图片');
+    } finally {
+      if (mounted) setState(() => _pickingCover = false);
+    }
+  }
+
+  Future<void> _openCoverCrop(String sourcePath) async {
+    if (!mounted) return;
 
     final croppedPath = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (_) => CoverCropPage(sourcePath: coverFile.path),
+        builder: (_) => CoverCropPage(sourcePath: sourcePath),
       ),
     );
 
     if (croppedPath != null && mounted) {
-      setState(() => _pendingCoverSourcePath = croppedPath);
+      setState(() {
+        _pendingCoverSourcePath = croppedPath;
+        _originalSourcePath = sourcePath;
+      });
     }
+  }
+
+  void _showCoverError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _pickRecordDate() async {
@@ -426,54 +472,6 @@ class _WorkEditPageState extends ConsumerState<WorkEditPage> {
   }
 }
 
-// -- Section card --
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: colorScheme.brightness == Brightness.light
-            ? AppTheme.cardLight
-            : AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.15),
-          width: 0.5,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 3,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: AppTheme.primary.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
 // -- Type button --
 class _TypeButton extends StatelessWidget {
   const _TypeButton({
@@ -491,7 +489,7 @@ class _TypeButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: AppMotion.normal,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
@@ -501,7 +499,10 @@ class _TypeButton extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? AppTheme.primary.withValues(alpha: 0.4)
-                : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
+                : Theme.of(context)
+                    .colorScheme
+                    .outlineVariant
+                    .withValues(alpha: 0.3),
             width: isSelected ? 1 : 0.5,
           ),
         ),
